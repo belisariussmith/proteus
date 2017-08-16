@@ -1,0 +1,491 @@
+#!/usr/bin/python
+###############################################################################
+#                      __                                         Israel Smith
+#    ____  _________  / /____  __  _______
+#   / __ \/ ___/ __ \/ __/ _ \/ / / / ___/
+#  / /_/ / /  / /_/ / /_/  __/ /_/ (__  )
+# / .___/_/   \____/\__/\___/\__,_/____/
+#/_/
+#       "the totally radixical script"           github.com/israelsmith/proteus
+###############################################################################
+#                                   Constants
+###############################################################################
+#
+Version = '1.0'
+Logo = '                       __        \r\n \
+    ____  _________  / /____  __  _______\r\n \
+   / __ \/ ___/ __ \/ __/ _ \/ / / / ___/\r\n \
+  / /_/ / /  / /_/ / /_/  __/ /_/ (__  ) \r\n \
+ / .___/_/   \____/\__/\___/\__,_/____/  \r\n \
+/_/\r\n'
+
+# 1; = bold 0; = normal
+ColorsON = {'Normal' :'\033[1;m', 
+            'Gray'   :'\033[1;30m', 
+            'Red'    :'\033[1;31m', 
+            'Green'  :'\033[1;32m', 
+            'Yellow' :'\033[1;33m', 
+            'Blue'   :'\033[1;34m', 
+            'Magenta':'\033[1;35m', 
+            'Cyan'   :'\033[1;36m', 
+            'White'  :'\033[1;37m', 
+            'Crimson':'\033[1;38m', 
+            'HRed'    :'\033[1;41m', 
+            'HGreen'  :'\033[1;42m', 
+            'HYellow' :'\033[1;43m', 
+            'HBlue'   :'\033[1;44m', 
+            'HMagenta':'\033[1;45m', 
+            'HCyan'   :'\033[1;46m', 
+            'HGray'   :'\033[1;47m', 
+            'HCrimson':'\033[1;48m'} 
+
+ColorsOFF = {'Normal' :'', 
+             'Gray'   :'', 
+             'Red'    :'', 
+             'Green'  :'', 
+             'Yellow' :'', 
+             'Blue'   :'', 
+             'Magenta':'', 
+             'Cyan'   :'', 
+             'White'  :'', 
+             'Crimson':'', 
+             'HRed'    :'', 
+             'HGreen'  :'', 
+             'HYellow' :'', 
+             'HBlue'   :'', 
+             'HMagenta':'', 
+             'HCyan'   :'', 
+             'HGray'   :'', 
+             'HCrimson':''} 
+"""
+    Notation for standard positional numeral systems can be found at:
+
+                https://wikipedia.org/wiki/List_of_numeral_systems
+"""
+ASCII   = 'ascii'
+Binary  = 'binary'
+Octal   = 'octal'
+Decimal = 'decimal'
+Hex     = 'hex'
+Base32  = 'base32'       # Duotrigesimal encoding
+Base64  = 'base64'       # Tetrasexagesimal encoding
+Base85  = 'base85'       # Pentoctogesimal encoding (6.7% more efficient than MIME-64)
+
+SupportedBases = [ASCII, Binary, Octal, Decimal, Hex, Base32, Base64]
+BaseThresholds = {'1': Binary, '7': Octal, '9': Decimal, 'f': Hex, 'Z': Base32, 'z': Base64}
+
+###############################################################################
+# Libraries
+###############################################################################
+from sys import argv, exc_info, version_info
+from base64 import b32encode, b32decode, b64encode, b64decode
+from string import punctuation, ascii_lowercase
+from argparse import ArgumentParser
+
+###############################################################################
+#                                   Globals
+###############################################################################
+Verbose=False                                # Default to quiet/nonverbose mode
+Colors=ColorsOFF                             # Colors are turned off by default
+
+SpecialChars = set(punctuation.replace("_", "")) # if any(char in invalidChars for char in word):
+###############################################################################
+#                                Binary (Base-2)
+###############################################################################
+def ascii2binary_python3(string):
+    binary = bin(int.from_bytes(string.encode('utf-8'), 'big'))[2:]
+    return binary.zfill(8 * ((len(binary) + 7) // 8))
+
+def binary2ascii_python3(binary):
+    n = int(binary, 2)
+    return n.to_bytes((n.bit_length() + 7) // 8, 'big').decode('utf-8') or '\0'
+
+def binary2ascii_python2(binary, chunkSize=8):
+    chunks = [binary[i:i+chunkSize] for i in range(0,len(binary),chunkSize)]
+    return ''.join([chr(int(c,base=2)) for c in chunks])
+
+def ascii2binary_python2(string, chunkSize=8):
+    return ''.join(bin(ord(x))[2:].zfill(chunkSize) for x in string.encode('utf-8'))
+
+def ascii2binary_python3(string, chunkSize=8):
+    return ''.join(bin(x)[2:].zfill(chunkSize) for x in string.encode('utf-8'))
+
+def binary2ascii(string):
+    """ Chooses best method to convert binary to ASCII based on Python version
+
+    Ideally for both backwards compatibility as well as speed/efficiency.
+    """
+    if (version_info >= (3,0)):
+        output = binary2ascii_python3(string)
+    else:
+        output = binary2ascii_python2(string)
+    return output
+
+def ascii2binary(string):
+    """ Chooses best method to convert ASCII to binary based on Python version
+
+    Ideally for both backwards compatibility as well as speed/efficiency.
+    """
+    if (version_info >= (3,0)):
+        output = ascii2binary_python3(string)
+    else:
+        output = ascii2binary_python2(string)
+    return output
+
+###############################################################################
+#                               Octal (Base-10)
+###############################################################################
+def ascii2octal(string):
+    """ Convert ASCII to Octal
+    Loop through each character in string and covert to octal (string)
+
+       Octals must be 3 characters in length, and be left-filled with zeroes. To
+    achieve this, the octal onvertred character must be temporarily changed to an 
+    int to drop all unecessary leading zeroes. Once dropped, *then* they can be
+    left-filled to 3-char length with a zfill.
+    """
+    return ' '.join(str(int(str(oct(ord(c))))).zfill(3) for c in string)
+def octal2ascii(string):
+    return ''.join(chr(int(c, 8)) for c in string.split())
+
+###############################################################################
+#                               Decimal (Base-10)
+###############################################################################
+def ascii2decimal(string):
+    """ Loop through each character in string and covert to decimal (string) """
+    return ' '.join(str(ord(c)) for c in string)
+def decimal2ascii(string):
+    return ''.join(chr(int(c)) for c in string.split())
+
+###############################################################################
+#                             Hexadecimal (Base-16)
+###############################################################################
+def ascii2hex(string):
+    """ Loop through each character in string and covert to hex (string) """
+    return ' '.join(hex(ord(c)) [2:] for c in string)
+
+def hex2ascii(string):
+    """ Would using binascii.unhexlify() be better? codecs.decode() in Python3
+     returns a bytes() string type - apparently .decode() is simply a wrapper
+     for unhexlify() supposedly also, making it less efficient 
+    """
+    return ''.join([chr(int(''.join(c), 16)) for c in zip(string[0::2],string[1::2])])
+
+###############################################################################
+#                                     Base32
+###############################################################################
+def ascii2base32(string):
+    return b32encode(string)
+def base322ascii(string):
+    """ Convert Base32 string to ASCII
+
+    Due to the nature of using this library, it may be possible that an error
+    or exception will be thrown. This should only occur due to either:
+
+                  (1) Incorrect radix (Base32) select for recoding
+
+                       or
+
+                  (2) Corrupted string
+
+    Should the string be corrupted, an effort will be made to eliminate the
+    corruption.
+
+    This is usually done by purging invalid chracters.
+
+    Note: purging only uses string.ascii_lowercase but not string.whitespace
+    """
+    global Verbose, SpecialChars
+
+    # Attempt to decode base32 string
+    try: 
+        output = b32decode(string)
+    except: 
+        # Atttempt failed
+        e_msg = exc_info()[1]                             # Capture message
+        output = e_msg                                    # Default to error
+        if (str(e_msg) == str('Incorrect padding')):      # Check if fixable
+            if Verbose: print Colors['HRed'] + 'Encountered Possibly corrupt data, attempting to rectify.' + Colors['Normal']
+            # Try to see if there is a padding problem first
+            if Verbose: print Colors['Yellow'] + 'Checking padding: ' + Colors['Normal'], 
+            if (len(string) % 4):
+                # Aha! Pad the string
+                if Verbose: print Colors['White'] + ' Incorrect padding, correcting.' + Colors['Normal']
+                string = string + ''.join('=' for i in range( (4 - len(string) % 4)  ) )
+            else:
+                if Verbose: print ' Padding fine.'
+                if Verbose: print Colors['Yellow'] + 'Checking invalid characters: ' + Colors['Normal'],
+                # Normally the 2 special characters in Base64 are + and /
+                invalidChars = {'1', '2', '8', '9', '0'} + SpecialChars + dict(ascii_lowercase)
+                if any(char in invalidChars for char in string):
+                    if Verbose: print ' Invalid characters found.'
+                    if Verbose: print Colors['HMagenta'] + 'Purging invalid characters...' + Colors['Normal']
+                    string.translate(None, ''.join(invalidChars))
+            # Let's try this again
+            try:
+                output = b32decode(string)
+            except:
+                if Verbose: print 'String is likely corrupted or not Base-32.'
+
+    return output 
+
+###############################################################################
+#                                     Base64
+###############################################################################
+def ascii2base64(string):
+    return b64encode(string)
+def base642ascii(string):
+    """ Convert Base64 string to ASCII
+
+    Due to the nature of using this library, it may be possible that an error
+    or exception will be thrown. This should only occur due to either:
+
+                  (1) Incorrect radix (Base64) select for recoding
+
+                       or
+
+                  (2) Corrupted string
+
+    Should the string be corrupted, an effort will be made to eliminate the
+    corruption.
+
+    This is usually done by purging invalid chracters.
+
+    Note: purging does not use string.whitespace
+    """
+    global Verbose, SpecialChars
+
+    # Attempt to decode base64 string
+    try: 
+        output = b64decode(string)
+    except: 
+        # Atttempt failed
+        e_msg = exc_info()[1]                             # Capture message
+        output = e_msg                                    # Default to error
+        if (str(e_msg) == str('Incorrect padding')):      # Check if fixable
+            if Verbose: print Colors['HRed'] + 'Encountered Possibly corrupt data, attempting to rectify.' + Colors['Normal']
+            # Try to see if there is a padding problem first
+            if Verbose: print Colors['Yellow'] + 'Checking padding: ' + Colors['Normal'], 
+            if (len(string) % 4):
+                # Aha! Pad the string
+                if Verbose: print Colors['White'] + ' Incorrect padding, correcting.' + Colors['Normal']
+                string = string + ''.join('=' for i in range( (4 - len(string) % 4)  ) )
+            else:
+                if Verbose: print ' Padding fine.'
+                if Verbose: print Colors['Yellow'] + 'Checking invalid characters: ' + Colors['Normal'],
+                # Normally the 2 special characters in Base64 are + and /
+                invalidChars = SpecialChars - {'+', '/'}
+                if any(char in invalidChars for char in string):
+                    if Verbose: print ' Invalid characters found.'
+                    if Verbose: print Colors['HMagenta'] + 'Purging invalid characters...' + Colors['Normal']
+                    string.translate(None, ''.join(invalidChars))
+            # Let's try this again
+            try:
+                output = b64decode(string)
+            except:
+                print 'String is likely corrupted or not Base-64.'
+
+    return output 
+
+###############################################################################
+#                                     Base85
+###############################################################################
+"""                              <future expansion>                         """
+
+###############################################################################
+#                                  Miscellaneous
+###############################################################################
+def highestMatch(matches):
+    """ Take a list of matches and determines which one has highest occurance.
+
+    Typical use:
+
+        >>> matches = ['base64', 'ascii', 'base32', 'base64']
+        >>> print highestMatch(matches)
+        'base64'
+
+    Basically a count is made of each match, and then the highest is selected
+    for return.
+
+    """
+    highest    = [0, None]                         # Initialize the highest var
+    counts = {}                                    # initialize count container
+    for match in matches: counts[match] = 0        # Initialize the counts
+    for match in matches: counts[match] += 1       # Count each match
+    for match in counts: 
+        if (counts[match] > highest[0]) : 
+            highest[0] = counts[match]
+            highest[1] = match
+    return highest[1]
+    
+    
+def detectEncoding(encodedText):
+    """ Attempts to determine the encoding of the string passed
+
+    Typical use:
+
+        detectEncoding(string)
+
+        Uses a combation of techniques to determine the most likely used radix
+    for encoding. The first determinator is what the highest-ordinal character
+    in the string is. 
+
+        This can produce a false negatives, particularly in shorter strings.
+
+        Each match is added to an array of potential matches, and then further
+    testing is done against each match to decide most likely solution.
+    
+    Base85 Future Reference:
+
+        Base85 use ASCCI codes 33 - 117 primary and then also 13, 32, 'y', and 'z'
+        (depending on variations)
+
+        Identifiers include use of '<~' '~>' initiators and delimeters respectively
+        (Adobe variant)
+
+        Identifiers include use of 'xbtoa Begin' 'xbtoa End' initiators and 
+        delimeters respectively
+        (BTOA Variant)
+
+    """
+    global Verbose
+    encoding = 'ascii' # Default to ASCII
+    matches = []
+    """
+      Detection Pass #1
+    """
+    for threshold in sorted(BaseThresholds):
+        if (max(list(encodedText)) == threshold):
+            matches.append(BaseThresholds[threshold])
+        else:
+            pass
+    """
+      Detection Pass #2 <incomplete>
+    """
+    # Idea is to utilize string library (e.g. string.hexdigits, string.octdigits, etc.)
+
+    """
+      Detection passes completed.
+    """
+    # If any matches have been made, tally them up to determine encoding
+    if len(matches): encoding = highestMatch(matches)
+
+    return encoding
+
+def conversion(encoding, decoding, string):
+    """ Conversion/recoding string from one radix to another (or to ASCII) 
+
+    Typical use:
+
+        conversion(Base64, ASCII, b64_encoded_string)
+        conversion(ASCII, binary, string)
+
+    This function makes use of the recoding functions' naming scheme (e.g. binary2ascii)  
+
+    For that reason, for future expansion the functions need only follow the naming scheme
+    and have an entry added to the Global list 'SupportedBases'
+    """
+    # Quick validation
+    if (encoding is decoding): return string         # No reason convert anything
+    if ((encoding != ASCII) and (decoding != ASCII)):# Spool through ASCII conversion
+        return conversion(ASCII, decoding, conversion(encoding, ASCII, string)) # recursion, ick!
+    return globals()[encoding+"2"+decoding](string)
+
+def setMaxWidth(string, maxwidth):
+    """ A generator that (re)creates newlines @ 'max width'
+        Wrapped with printMaxWidth() function
+
+    Typical use:
+        >>> foo = '120 145 164 145 162 040 102 154 157 157 144 040 143 141 165 147'
+        >>> printMaxWidth(foo, 20)
+        120 145 164 145
+        162 040 102 154
+        157 157 144 040
+        143 141 165 147
+
+    Current issues: Only works in interpreter, should be re-written so it is not 
+                    using yield iteration
+
+    See also: printMaxWidth() 
+    """
+    gen = iter(string.split())
+    word = gen.next()
+    while (True):
+        yield word
+        linelen = len(word)
+        while (True):
+            word = gen.next()
+            if (linelen + len(word) > maxwidth):
+                yield '\n'
+                break
+            yield ' '
+            yield word
+            linelen += len(word) + 1
+
+def printMaxWidth(string, maxwidth = 80):
+    """ Calls the setMaxWidth function which re-orders a string with newlines
+        based on the 'max width' - defaults to 80 charactes in length/width.
+
+    See also: setMaxWidth()
+    """
+    print ''.join(setMaxWidth(string, maxwidth))
+
+###############################################################################
+#                                  Main Program
+###############################################################################
+#
+# Main() Function
+#
+def main():
+    # Reference for global switches
+    global Verbose, Colors
+    # Initialize codings
+    Encoding, Decoding = None, None
+    # Initialize and create argument parser
+    parser = ArgumentParser(description='Detect or convert radix encoded string of characters.') 
+    parser.add_argument('--version', action='version', version='%(prog)s '+Version)
+    parser.add_argument('--encoding', choices=SupportedBases, help='The encoding (if known) of string.') 
+    parser.add_argument('--decoding', choices=SupportedBases, default='ascii', help='Encoding to convert string to. (Default: ascii)') 
+    parser.add_argument('string')
+    parser.add_argument('-v', const=1, nargs='?', help='Verbose output.')
+    parser.add_argument('--color', const=1, nargs='?', help='Colorize output.')
+    parser.add_argument('-w', help='Set a maximim width of output string lines.') 
+    # Parse the arguments
+    args = parser.parse_args()
+    if vars(args)['color']:
+        Colors = ColorsON                        # Colorize output
+    if vars(args)['v']:
+        Verbose = True                           # Print verbose output
+
+    if (Verbose):
+        print Colors['Red'] + '###########################################################################' + Colors['Normal']
+	print Colors['White'] + Logo + Colors['Normal']
+        print '                                                           Version ' + Version
+        print Colors['Red'] + '###########################################################################' + Colors['Normal']
+	print ''
+
+    # No validation necessary (completed by parser)
+    if (vars(args)['encoding']):
+        Encoding = vars(args)['encoding']
+    if (vars(args)['decoding']):
+        Decoding = vars(args)['decoding']
+    if (Decoding and (vars(args)['encoding'] == None)):
+        # Detect encoding
+        Encoding = detectEncoding(vars(args)['string'])
+	if Verbose: print Colors['HGreen'] + 'Detected ' + Encoding + '. ' + Colors['Normal'],
+    #else:
+    #    Encoding = vars(args)['encoding']
+    if Verbose: print 'Coverting <' + Colors['Red'] + Encoding + Colors['Normal'] + '> to <' + Colors['Cyan'] + Decoding + Colors['Normal'] + '>:\n'
+    #print '[' + vars(args)['string'] + ']'
+    output = conversion(Encoding, Decoding, vars(args)['string'])
+    if (vars(args)['w']):
+        printMaxWidth((output), vars(args)['w'])
+    else:
+        print output
+    
+#
+# main() function call when running as stand-alone application
+#
+if __name__ == '__main__':
+    main()
+
