@@ -132,6 +132,11 @@ def ascii2binary(string):
         output = ascii2binary_python2(string)
     return output
 
+def binary2decimal(binary, chunkSize=8):
+    """ Loop through 8-char chunks in string and covert to decimal """
+    chunks = [binary[i:i+chunkSize] for i in range(0,len(binary),chunkSize)]
+    return ' '.join([str(int(c,base=2)) for c in chunks])
+
 ###############################################################################
 #                               Octal (Base-10)
 ###############################################################################
