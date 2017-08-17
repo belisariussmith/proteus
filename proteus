@@ -11,7 +11,7 @@
 #                                   Constants
 ###############################################################################
 #
-Version = '1.0'
+Version = '1.1'
 Logo = '                       __        \r\n \
     ____  _________  / /____  __  _______\r\n \
    / __ \/ ___/ __ \/ __/ _ \/ / / / ___/\r\n \
@@ -388,6 +388,9 @@ def conversion(encoding, decoding, string):
     # Quick validation
     if (encoding is decoding): return string         # No reason convert anything
     if ((encoding != ASCII) and (decoding != ASCII)):# Spool through ASCII conversion
+      if (encoding+'2'+decoding in globals()):       # Conversion function exists
+        return globals()[encoding+"2"+decoding](string)
+      else:
         return conversion(ASCII, decoding, conversion(encoding, ASCII, string)) # recursion, ick!
     return globals()[encoding+"2"+decoding](string)
 
