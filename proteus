@@ -402,13 +402,13 @@ def conversion(encoding, decoding, string):
     and have an entry added to the Global list 'SupportedBases'
     """
     # Quick validation
-    if (encoding is decoding): return string         # No reason convert anything
-    if ((encoding != ASCII) and (decoding != ASCII)):# Spool through ASCII conversion
-      if (encoding+'2'+decoding in globals()):       # Conversion function exists
+    if (encoding is decoding): return string         # No reason to convert anything
+    if ((encoding != ASCII) and (decoding != ASCII)):# Radix to radix conversion
+      if (encoding+'2'+decoding in globals()):       # Conversion function exists?
         return globals()[encoding+"2"+decoding](string)
-      else:
+      else:                                          # Spool through ASCII conversion
         return conversion(ASCII, decoding, conversion(encoding, ASCII, string)) # recursion, ick!
-    return globals()[encoding+"2"+decoding](string)
+    return globals()[encoding+"2"+decoding](string)  # If all else fails
 
 def setMaxWidth(string, maxwidth):
     """ A generator that (re)creates newlines @ 'max width'
