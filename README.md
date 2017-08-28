@@ -23,9 +23,9 @@ being in UTF-8 (8-bit unicode).
 These are areas of the script that, while functional, are in need of refactoring.
 
              - Encoding detection
-             - Binary<-->ASCII conversion (some benchmarking is needed here)
-             - Radix to Radix conversion in general (current method is Radix->ASCII->Radix)
-
+             - Benchmarking Binary<-->ASCII conversion
+             - Radix to Radix conversion optimization (current method is Radix->ASCII->Radix)*
+Some Radix to Radix optimizations are complete (e.g. binary2octal)
 
 
 
