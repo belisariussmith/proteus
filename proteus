@@ -137,6 +137,17 @@ def binary2decimal(binary, chunkSize=8):
     chunks = [binary[i:i+chunkSize] for i in range(0,len(binary),chunkSize)]
     return ' '.join([str(int(c,base=2)) for c in chunks])
 
+def binary2octal(binary, chunkSize=8):
+    """ Convert Binary to Octal
+    Loop through 8-char chunks in string and covert to octal (string)
+
+       Octals must be 3 characters in length, and be left-filled with zeroes. To
+    achieve this, the octal onvertred character must be temporarily changed to an
+    int to drop all unecessary leading zeroes. Once dropped, *then* they can be
+    left-filled to 3-char length with a zfill.
+    """
+    chunks = [binary[i:i+chunkSize] for i in range(0,len(binary),chunkSize)]
+    return ' '.join([str(int(oct(int(c,base=2)))).zfill(3) for c in chunks])
 ###############################################################################
 #                               Octal (Base-8)
 ###############################################################################
