@@ -1,0 +1,49 @@
+.TH PROTEUS "1" "September 2017" "proteus 1.1" "User Commands"
+.SH NAME
+proteus \- manual page for proteus 1.0
+.SH DESCRIPTION
+usage: proteus [\-h] [\-\-version]
+.IP
+[\-\-encoding {ascii,binary,octal,decimal,hex,base32,base64}]
+[\-\-decoding {ascii,binary,octal,decimal,hex,base32,base64}]
+[\-v [V]] [\-\-color [COLOR]] [\-w W]
+string
+.PP
+Detect or convert radix encoded string of characters.
+.SS "positional arguments:"
+.IP
+string
+.SS "optional arguments:"
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+show this help message and exit
+.TP
+\fB\-\-version\fR
+show program's version number and exit
+.TP
+\fB\-\-encoding\fR {ascii,binary,octal,decimal,hex,base32,base64}
+The encoding (if known) of string.
+.TP
+\fB\-\-decoding\fR {ascii,binary,octal,decimal,hex,base32,base64}
+Encoding to convert string to. (Default: ascii)
+.TP
+\fB\-v\fR [V]
+Verbose output.
+.TP
+\fB\-\-color\fR [COLOR]
+Colorize output.
+.TP
+\fB\-w\fR W
+Set a maximim width of output string lines.
+.SH "SEE ALSO"
+The full documentation for
+.B proteus
+is maintained as a Texinfo manual.  If the
+.B info
+and
+.B proteus
+programs are properly installed at your site, the command
+.IP
+.B info proteus
+.PP
+should give you access to the complete manual.
