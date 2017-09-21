@@ -365,6 +365,7 @@ def detectEncoding(encodedText):
 
     """
     global Verbose
+    global BaseThresholds
     encoding = 'ascii' # Default to ASCII
     matches = []
     """
